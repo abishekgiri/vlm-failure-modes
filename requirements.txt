@@ -1,0 +1,22 @@
+# Core ML
+torch
+torchvision
+torchaudio
+
+# HuggingFace / VLM
+transformers>=4.36.0
+accelerate
+sentencepiece
+
+# LLaVA deps
+einops
+timm
+opencv-python
+pillow
+scipy
+numpy
+tqdm
+pyyaml
+
+# Optional (GPU efficiency on Colab)
+bitsandbytes
