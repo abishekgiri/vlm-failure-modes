@@ -1,7 +1,7 @@
 # The Confidence Trap: Perturbation-Induced Miscalibration in Vision–Language Models
 
 **Abishek Kumar Giri**
-**Northeastern University**
+**Stockton University**
 
 **Abstract**
 Vision-Language Models (VLMs) are increasingly deployed in safety-critical domains, requiring robust uncertainty estimation. This study investigates the calibration of LLaVA-1.5-7B under adversarial visual perturbations. Contrary to the expectation that visual degradation should increase model uncertainty, we identify a counter-intuitive failure mode: the "Confidence Trap." Our experiments reveal that moderate adversarial noise ($\epsilon=0.3$) consistently reduces the entropy of the model's output distribution (Mean $\Delta \approx -0.028$), indicating systematic overconfidence in the presence of corrupted inputs. This finding challenges the reliability of entropy-based uncertainty measures as safety signals in multimodal systems.
@@ -11,7 +11,7 @@ Vision-Language Models (VLMs) are increasingly deployed in safety-critical domai
 ## 1. Introduction
 The alignment of Large Language Models (LLMs) has largely focused on textual robustness. However, the multimodal nature of VLMs introduces a new attack surface: the visual encoder. As these models are deployed in safety-critical settings (e.g., autonomous agents, medical imaging), it is crucial that they exhibit higher uncertainty when presented with ambiguous or corrupted visual data.
 
-In this work, we probe the internal confidence behavior of LLaVA-1.5-7B under controlled visual degradation. We test the hypothesis that entropy reflects epistemic uncertainty. Surprisingly, we find that visual degradation does not reliable increase uncertainty. Instead, we observe a systematic bias toward **confidence amplification**—the model often becomes *more* confident as the image is perturbed.
+In this work, we probe the internal confidence behavior of LLaVA-1.5-7B under controlled visual degradation. We test the hypothesis that entropy reflects epistemic uncertainty. Surprisingly, we find that visual degradation does not reliably increase uncertainty. Instead, we observe a systematic bias toward **confidence amplification**—the model often becomes *more* confident as the image is perturbed.
 
 ## 2. Related Work
 *   **Adversarial Attacks on VLMs:** Prior work has shown that VLMs can be jailbroken via visual inputs (Qi et al., 2023), but these studies focus on safety filter bypass rather than calibration.
@@ -20,7 +20,7 @@ In this work, we probe the internal confidence behavior of LLaVA-1.5-7B under co
 
 ## 3. Method
 ### 3.1 Model & Environment
-We utilized **LLaVA-1.5-7B**, a state-of-the-art open-source VLM. Experiments were conducted on a Tesla T4 GPU environment using a quantized inference pipeline.
+We utilized **LLaVA-1.5-7B**, a state-of-the-art open-source VLM. Experiments were conducted on a Tesla T4 GPU environment using mixed-precision (FP16) inference.
 
 ### 3.2 Visual Perturbation Protocol
 We introduce visual perturbations via a projected gradient descent (PGD) attack proxy applied to the image input. The perturbation magnitude $\epsilon$ is varied across four levels: 0.1, 0.2, 0.3, and 0.5. We use an $L_\infty$ constraint where the perturbed image $x_{adv}$ satisfies $||x_{adv} - x||_\infty \le \epsilon$.
@@ -49,13 +49,18 @@ Table 1 summarizes the mean entropy shift across perturbation strengths.
 
 At low perturbation levels ($\epsilon = 0.1$), entropy responses are unstable and approximately centered around zero, indicating no consistent uncertainty adjustment. As perturbation strength increases, the entropy shift becomes increasingly negative. At $\epsilon = 0.3$ and $\epsilon = 0.5$, the majority of runs exhibit reduced entropy relative to the clean baseline. These results indicate a systematic bias toward confidence amplification under moderate to severe visual degradation.
 
+![Mean entropy shift vs. perturbation strength](../results/figures/figure_1_epsilon_delta.png)
+*Figure 1: Mean entropy shift ($\Delta = H_{adv} - H_{clean}$) as a function of perturbation strength $\epsilon$. Negative values indicate increased model confidence under visual degradation.*
+
+Figure 1 visualizes a clear negative trend between perturbation strength and entropy shift, confirming that increased visual degradation correlates with systematic confidence amplification.
+
 ### 4.3 Non-Monotonic and Biased Confidence Behavior
 Notably, entropy does not increase monotonically with visual corruption. While individual runs occasionally exhibit entropy increases, the overall trend is dominated by a negative mean shift. This behavior demonstrates that entropy is not a reliable proxy for epistemic uncertainty in vision–language models under visual perturbations.
 
 The observed pattern suggests a failure mode characterized by **biased miscalibration** rather than random noise: as visual information deteriorates, the model frequently becomes more confident rather than less.
 
 ### 4.4 Defense Failure: Entropy Thresholding
-We further observe that entropy-based rejection mechanisms (e.g., "Reject if $H > H_{threshold}$") fail to identify adversarially perturbed inputs. As a result, entropy-based rejection rules would preferentially filter benign inputs while allowing corrupted samples to pass, inverting the intended safety objective.
+We further observe that entropy-based rejection mechanisms (e.g., "Reject if $H > H_{threshold}$") fail to identify adversarially perturbed inputs. Across all tested $\epsilon$ values, adversarially perturbed inputs frequently exhibited entropy values below the clean baseline, indicating that fixed entropy thresholds fail to distinguish corrupted inputs from benign ones. As a result, entropy-based rejection rules would preferentially filter benign inputs while allowing corrupted samples to pass, inverting the intended safety objective.
 
 ## 5. Discussion
 The results suggest that as the visual signal is degraded, the VLM may be defaulting to its language model priors. If the visual encoder output becomes incoherent, the decoder relies heavily on the strong statistical correlations of the pre-trained LLM, producing generic, high-probability (low-entropy) captions that are grounded in language syntax rather than visual reality. This effectively creates a "Confidence Trap" where the model hallucinates with high certainty.
