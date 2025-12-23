@@ -51,7 +51,7 @@ def main():
     # -------------------------------
 
     # Simulate adversarial noise WITHOUT backprop
-    noise = torch.randn_like(image_tensor) * 0.01
+    noise = torch.randn_like(image_tensor) * 0.03
     adv_image_tensor = torch.clamp(image_tensor + noise, 0, 1)
 
     with torch.no_grad():
