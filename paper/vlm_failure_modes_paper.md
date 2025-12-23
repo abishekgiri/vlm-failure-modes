@@ -1,7 +1,10 @@
-# Perturbation-Induced Confidence Bias in Vision–Language Models
+# The Confidence Trap: Perturbation-Induced Miscalibration in Vision–Language Models
+
+**Abishek Kumar Giri**
+**Northeastern University**
 
 **Abstract**
-Vision-Language Models (VLMs) are increasingly deployed in safety-critical domains, requiring robust uncertainty estimation. This study investigates the calibration of LLaVA-1.5-7B under adversarial visual perturbations. Contrary to the expectation that visual degradation should increase model uncertainty, we identify a counter-intuitive failure mode: the "Confidence Trap." Our experiments reveal that moderate adversarial noise ($\epsilon=0.3$) consistently reduces the entropy of the model's output distribution (Mean $\Delta \approx -0.028$), indicating systematic overconfidence in the presence of corrupted inputs. This finding challenges the reliability of entropy-based uncertainty measures in multimodal systems.
+Vision-Language Models (VLMs) are increasingly deployed in safety-critical domains, requiring robust uncertainty estimation. This study investigates the calibration of LLaVA-1.5-7B under adversarial visual perturbations. Contrary to the expectation that visual degradation should increase model uncertainty, we identify a counter-intuitive failure mode: the "Confidence Trap." Our experiments reveal that moderate adversarial noise ($\epsilon=0.3$) consistently reduces the entropy of the model's output distribution (Mean $\Delta \approx -0.028$), indicating systematic overconfidence in the presence of corrupted inputs. This finding challenges the reliability of entropy-based uncertainty measures as safety signals in multimodal systems.
 
 ---
 
@@ -21,10 +24,10 @@ We utilized **LLaVA-1.5-7B**, a state-of-the-art open-source VLM. Experiments we
 
 ### 3.2 Visual Perturbation Protocol
 We introduce visual perturbations via a projected gradient descent (PGD) attack proxy applied to the image input. The perturbation magnitude $\epsilon$ is varied across four levels: 0.1, 0.2, 0.3, and 0.5. We use an $L_\infty$ constraint where the perturbed image $x_{adv}$ satisfies $||x_{adv} - x||_\infty \le \epsilon$.
-Due to hardware constraints, we utilize a **Safe Adversarial Proxy** (random Gaussian noise scaled to $\epsilon$) which serves as a valid proxy for distribution shift and sensor degradation.
+Due to hardware constraints, we approximate adversarial visual perturbations using bounded additive noise scaled to $\epsilon$, which serves as a controlled proxy for distribution shift and sensor degradation rather than a full white-box attack.
 
 ### 3.3 Metric: Entropy Delta
-For each input, we compute the Shannon entropy of the model's token-level output distribution. We define the **Entropy Delta** ($\Delta$) as:
+For each input, we compute the Shannon entropy of the model's token-level output distribution. Entropy is computed over the token-level output distribution of the language decoder for the generated response, averaged across generated tokens. We define the **Entropy Delta** ($\Delta$) as:
 $$\Delta = H_{\text{adv}} - H_{\text{clean}}$$
 A negative $\Delta$ indicates the model is *more confident* (less uncertain) on the adversarial input.
 
@@ -52,7 +55,7 @@ Notably, entropy does not increase monotonically with visual corruption. While i
 The observed pattern suggests a failure mode characterized by **biased miscalibration** rather than random noise: as visual information deteriorates, the model frequently becomes more confident rather than less.
 
 ### 4.4 Defense Failure: Entropy Thresholding
-We further observe that entropy-based rejection mechanisms (e.g., "Reject if $H > H_{threshold}$") fail to identify adversarially perturbed inputs. Since adversarial samples frequently exhibit *lower* entropy than their clean counterparts, they would bypass such safety filters more easily than valid inputs. This confirms that these inputs are not only miscalibrated but actively misleading to standard defense heuristics.
+We further observe that entropy-based rejection mechanisms (e.g., "Reject if $H > H_{threshold}$") fail to identify adversarially perturbed inputs. As a result, entropy-based rejection rules would preferentially filter benign inputs while allowing corrupted samples to pass, inverting the intended safety objective.
 
 ## 5. Discussion
 The results suggest that as the visual signal is degraded, the VLM may be defaulting to its language model priors. If the visual encoder output becomes incoherent, the decoder relies heavily on the strong statistical correlations of the pre-trained LLM, producing generic, high-probability (low-entropy) captions that are grounded in language syntax rather than visual reality. This effectively creates a "Confidence Trap" where the model hallucinates with high certainty.
