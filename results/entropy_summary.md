@@ -27,3 +27,11 @@ LLaVA-1.5 exhibits a systematic bias toward confidence amplification under moder
 
 ## Paper-Ready Results Paragraph
 Across five independent runs with moderate visual perturbations ($\epsilon=0.3$), LLaVA-1.5 exhibited a consistent bias toward reduced output entropy. Four out of five trials showed a decrease in entropy relative to the clean baseline, with a mean entropy shift of -0.023. While one trial exhibited a small positive deviation, the overall trend indicates that visual degradation does not reliably increase uncertainty, revealing a systematic miscalibration in the model’s confidence estimates.
+
+## Final Aggregated Results
+| Epsilon | Mean Δ   | Behavior |
+|---------|----------|----------|
+| 0.1     | ~ 0.000  | Unstable / random |
+| 0.2     | -0.018   | Emerging bias |
+| 0.3     | -0.028   | Consistent negative bias |
+| 0.5     | -0.050   | Strong confidence amplification |
